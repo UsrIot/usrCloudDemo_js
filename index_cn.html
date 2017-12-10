@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>sdk操作demo</title>
+    <style>
+        fieldset {
+            box-sizing: border-box;
+            padding-left: 15px;
+            padding-right: 15px;
+            margin: 0px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .info {
+            font-size: 13px;
+            color: #1aa203;
+        }
+    </style>
+    <script src="mqttws31.js"></script>
+    <script src="usrCloud.js"></script>
+    <script src="jquery-3.2.1.min.js"></script>
+</head>
+<body style="width:65%;margin:0 auto">
+<fieldset>
+    <legend>说明</legend>
+    <div style="color:#1aa203">
+        1.先点击“连接”，连接成功后。<br/>
+        2.云组态开发：点击“订阅”->“写入数据”<br/>
+        3.云交换机开发：点击“订阅”->“发送”<br/>
+        本Demo演示利用透传云实现Modbus数据收发。
+    </div>
+</fieldset>
+<fieldset>
+    <legend>登陆</legend>
+    用户名：<input id="account" value="test2"/>
+    密码：<input id="password" type="password" value="123456"/>
+    <button onclick="connect()">连接</button>
+    <button onclick="disConnect()">断开</button>
+    <span id="info1" class='info'></span>
+</fieldset>
+<br/>
+<h1>云组态</h1>
+<fieldset>
+    <legend>订阅 & 取消订阅（订阅后收到设备推送消息）</legend>
+    <fieldset style="width:40%;height:280px;float:left;line-height: 30px;">
+        <legend>操作</legend>
+        设备ID：<br/><input id="devId" value="00004299000000000011"/><br/>
+        <button onclick="subscribeDevParsed()">订阅</button>
+        <button onclick="unSubscribeDevParsed()">取消订阅</button>
+        <span id="info2" class='info'></span><br/>
+        数据点ID：<br/><input id="dataPointId" value="2922"/><br/>
+        发送数值：<br/><input id="value" value="0"/><br/>
+        <button onclick="publishParsedSetDataPoint()">写入数据</button>
+        <!--<button onclick="publishParsedQueryDataPoint()">读取数据</button>-->
+        <span id="info5" class='info'></span>
+    </fieldset>
+    <fieldset style="width:59%;height:280px;float:right;overflow: auto;">
+        <legend>已订阅设备</legend>
+        <ul id="topic1"></ul>
+    </fieldset>
+</fieldset>
+<fieldset style="margin-top:15px;">
+    <legend>发布</legend>
+    <fieldset style="width:49.5%;height:200px;float:left;">
+        <legend>已发送数据</legend>
+        <ul id="sendData1" style="height:110px;overflow: auto;"></ul>
+        已发送：<span id="sendCount1">0</span><button onclick="clear1()">清空</button>
+    </fieldset>
+    <fieldset style="width:49.5%;height:200px;float:right;">
+        <legend>收到的数据</legend>
+        <ul id="rcvData1" style="height:110px;overflow: auto;"></ul>
+        已接收：<span id="rcvCount1">0</span><button onclick="clear2()">清空</button>
+    </fieldset>
+</fieldset>
+
+
+<br/>
+<h1>云交换机</h1>
+<fieldset>
+    <legend>订阅 & 取消订阅（订阅后收到设备推送消息）</legend>
+    <fieldset style="width:49.5%;height:360px;float:left;line-height:30px">
+        <legend>操作</legend>
+        <input type="radio" id="devicesub" value="device" name="subscribeMode" checked="checked"/>单个设备<br/>设备ID：
+        <input type="text" placeholder="输入设备ID..." value="00004299000000000011" id="devId2"/><br/>
+        <label style="font-size:14px;">（多个设备用英文格式的","分隔）</label>
+        <br/>
+        <input type="radio" id="accountsub" value="account" name="subscribeMode"/>账号下全部设备<br/>
+        <input type="button" onclick="subscribeDevRaw()" name="Subscribe" value="订阅"/>
+        <input type="button" onclick="unSubscribeDevRaw()" name="Unsubscribe" value="取消订阅"/>
+        <span id="info3" class='info'></span><br/>
+        <input type="radio" id="devicepub" value="device" name="publishMode" checked="checked"/>单发
+        &nbsp;&nbsp;设备ID:
+        <input type="text" id="publishTopic" placeholder="输入设备ID..." value="00004299000000000011"><br/>
+        <input type="radio" id="accountpub" value="account" name="publishMode"/>群发
+        <input type="checkbox" id="isPubHex" checked>16进制<br/>
+        <textarea id="publishPayload" style="width:100%;height: 70px;padding:15px;box-sizing:border-box;">0f 30 06 40 00 02  c0 7d</textarea>
+        <input type="button" onclick="publishRawToDev()" name="Publish" value="发送"/>
+        <span id="info4" class='info'></span>
+    </fieldset>
+    <fieldset style="width:49.5%;height:360px;float:right;overflow: auto;">
+        <legend>已订阅设备</legend>
+        <ul id="topic2"></ul>
+    </fieldset>
+</fieldset>
+
+<fieldset style="margin-top:15px;margin-bottom: 50px;">
+    <legend>发布</legend>
+    <fieldset style="width:49.5%;height:200px;float:left;">
+        <legend>已发送数据</legend>
+        <ul id="sendData2" style="height:110px;overflow-y: auto;"></ul>
+        已发送：<span id="sendCount2">0</span><button onclick="clear3()">清空</button>
+    </fieldset>
+    <fieldset style="width:49.5%;height:200px;float:right;">
+        <legend>收到消息</legend>
+        <div id="rcvData2" style="height:140px;overflow-y:auto;">
+        </div>
+        已接收：<span id="rcvCount2">0</span><button onclick="clear4()">清空</button>
+    </fieldset>
+</fieldset>
+
+<script lang="javascript">
+    /**
+     * 登陆（云组态和云交换机共用）
+     */
+    function connect() {
+        usrCloud.USR_Connect($("#account").val(), hex_md5($("#password").val()));
+    }
+
+    /**
+     * 取消登录（云组态和云交换机共用）
+     */
+    function disConnect() {
+        usrCloud.USR_DisConnect();
+    }
+
+    /**
+     * 连接成功回调（云组态和云交换机共用）
+     */
+    function USR_onConnAck(event) {
+        console.log(event);
+        if(event.code==0) {
+            $("#info1").text("连接成功");
+        }else{
+            $("#info1").text("连接失败");
+        }
+    }
+
+    /**
+     * 连接丢失回调（云组态和云交换机共用）
+     */
+    function USR_onConnLost(event) {
+        console.log(event);
+        $("#info1").text("连接断开");
+    }
+
+    /**
+     * 订阅成功回调（云组态和云交换机共用）
+     */
+    function USR_onSubscribeAck(event) {
+        console.log(event);
+        //判断返回函数名
+        if (event.SubFunName === 'SubscribeDevParsed') { //云组态
+            if (event.code === 0) {
+                $("#info2").text('订阅成功');
+                $("#topic1").append("<li>" + event.SubParam.split('/')[2] + "</li>");
+            } else {
+                $("#info2").text('订阅失败');
+            }
+        } else if (event.SubFunName === 'SubDevRaw' || event.SubFunName === 'SubscribeUserRaw' || event.SubFunName === 'UnSubscribeDevRaw') { //云交换机
+            if (event.code === 0) {
+                $("#topic2").append("<li>" + event.SubParam.split('/')[2] + "</li>");
+                $("#info3").text('订阅成功');
+            } else {
+                $("#info3").text('订阅失败');
+            }
+        }
+    }
+
+    /**
+     * 取消订阅成功回调（云组态和云交换机共用）
+     */
+    function USR_onUnSubscribeAck(event) {
+        console.log(event);
+        if (event.SubFunName === 'UnSubscribeDevParsed') { //云组态
+            if (event.code === 0) {
+                $("#info2").text('取消订阅成功');
+                $("#topic1 li").each(function () {
+                    if ($(this).text() === event.SubParam.split('/')[2]) {
+                        $(this).remove();
+                    }
+                })
+            } else {
+                $("#info2").text('取消订阅失败');
+            }
+        } else if (event.SubFunName === 'UnSubDevRaw' || event.SubFunName === 'UnSubscribeUserRaw' || event.SubFunName === 'UnSubscribeDevRaw') { //云交换机
+            if (event.code === 0) {
+                $("#info3").text('取消订阅成功');
+                //遍历删除已取消订阅的设备
+                $("#topic2 li").each(function () {
+                    if ($(this).text() === event.SubParam.split('/')[2]) {
+                        $(this).remove();
+                    }
+                })
+            } else {
+                $("#info3").text('取消订阅失败');
+            }
+        }
+    }
+
+
+    /**
+     * 数据点数据推送回调（云组态）
+     */
+    function USR_onRcvParsedDataPointPush(event) {
+        console.log(event);
+        $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
+        $("#rcvData1").append("<li>devId:" + event.devId + " dataPointId:" + event.dataPoints[0].pointId + " value:" + event.dataPoints[0].value);
+    }
+
+    /**
+     * 接收数据状态回调（云组态）
+     */
+    function USR_onRcvParsedOptionResponseReturn(event) {
+        $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
+        console.log(event);
+    }
+
+    /**
+     * 接收上下线回调（云组态）
+     */
+    function USR_onRcvParsedDevStatusPush(event) {
+        console.log(event);
+        $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
+        alert('devId:' + event.devId + 'status:' + event.status);
+    }
+
+    /**
+     * 接收设备报警回调（云组态）
+     */
+    function USR_onRcvParsedDevAlarmPush(event) {
+        $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
+        console.log(event);
+    }
+
+    /**
+     * 接收设备原始数据流回调（云交换机）
+     */
+    function USR_onRcvRawFromDev(event) {
+        $("#rcvCount2").text(parseInt($("#rcvCount2").text())+1);
+        console.log(event);
+        $("#rcvData2").append("<li>devId:" + event.devId + "\tdata:" + buf2HexStr(event.payload) + "</li>")
+    }
+
+    var usrCloud = new UsrCloud();
+    //定义回调
+    var callback = {
+        USR_onConnAck: USR_onConnAck,
+        USR_onConnLost: USR_onConnLost,
+        USR_onSubscribeAck: USR_onSubscribeAck,
+        USR_onUnSubscribeAck: USR_onUnSubscribeAck,
+        USR_onRcvParsedDataPointPush: USR_onRcvParsedDataPointPush,
+        USR_onRcvParsedOptionResponseReturn: USR_onRcvParsedOptionResponseReturn,
+        USR_onRcvParsedDevStatusPush: USR_onRcvParsedDevStatusPush,
+        USR_onRcvRawFromDev: USR_onRcvRawFromDev,
+        USR_onRcvParsedDevAlarmPush: USR_onRcvParsedDevAlarmPush
+    };
+    //初始化
+    usrCloud.Usr_Init("clouddata.usr.cn", 8080, 2, callback);
+
+    /**
+     * 订阅设备数据
+     */
+    function subscribeDevParsed() {
+        var result = usrCloud.USR_SubscribeDevParsed($("#devId").val());
+        if (result !== 0) {
+            $("#info2").text('订阅失败,错误代码：' + result);
+        }
+    }
+
+    /**
+     * 取消订阅设备数据（云组态）
+     */
+    function unSubscribeDevParsed() {
+        var result = usrCloud.USR_UnSubscribeDevParsed($("#devId").val());
+        if (result !== 0) {
+            $("#info2").text('取消订阅失败,错误代码：' + result);
+        }
+    }
+
+    /**
+     * 读取数据点数据
+     */
+    function publishParsedQueryDataPoint(){
+        var result = usrCloud.USR_PublishParsedQueryDataPoint($("#devId").val(), $("#dataPointId").val());
+        if (result === 0) {
+            $("#sendCount1").text(parseInt($("#sendCount1").text())+1);
+            $("#info5").text("");
+            $("#sendData1").append("<li>devId:" + $("#devId").val() + " dataPointId:" + $("#dataPointId").val()+"</li>");
+        } else {
+            $("#info5").text("发送失败");
+        }
+    }
+
+
+    /**
+     * 设置数据点数据（云组态）
+     */
+    function publishParsedSetDataPoint() {
+        var result = usrCloud.USR_PublishParsedSetDataPoint($("#devId").val(), $("#dataPointId").val(), $("#value").val());
+        if (result === 0) {
+            $("#sendCount1").text(parseInt($("#sendCount1").text())+1);
+            $("#info5").text("");
+            $("#sendData1").append("<li>devId:" + $("#devId").val() + " dataPointId:" + $("#dataPointId").val() + " value:" + $("#value").val()+"</li>");
+        } else {
+            $("#info5").text("发送失败");
+        }
+    }
+
+    /**
+     * 订阅设备原始数据流（云交换机）
+     */
+    function subscribeDevRaw() {
+        var result;
+        if ($("#accountsub").is(":checked")) { //订阅账号下全部设备
+            result = usrCloud.USR_SubscribeUserRaw($("#account").val());
+        } else { //取消订阅单个设备
+            result = usrCloud.USR_SubscribeDevRaw($("#devId2").val());
+        }
+        $("#info3").text("订阅失败，错误代码:" + result);
+    }
+
+    /**
+     * 取消订阅设备原始数据流（云交换机）
+     */
+    function unSubscribeDevRaw() {
+        var result;
+        if ($("#devicesub").is(":checked")) { //订阅账号下全部设备
+            result = usrCloud.USR_UnSubscribeDevRaw($("#devId2").val());
+        } else { //取消订阅单个设备
+            result = usrCloud.USR_UnSubscribeUserRaw($("#account").val());
+        }
+        $("#info3").text("取消订阅失败，错误代码:" + result);
+    }
+
+    /**
+     * 发送原始数据流（云交换机）
+     */
+    function publishRawToDev() {
+        var dataByte = [];
+        var devId = $('#publishTopic').val();
+        var payload = $('#publishPayload').val();
+        if ($('#isPubHex').is(':checked')) {
+            //十六机制字符串转Uint8Array格式的字节数组
+            dataByte = HexStr2Bytes(payload);
+        } else {
+            //获取消息UTF-8编码字节长度并创建Uint8Array字节数组
+            for (var i = 0; i < payload.length; i++) {
+                dataByte[i] = payload.charCodeAt(i);
+            }
+            stringToUTF8(payload, dataByte, 0);
+        }
+        var result;
+        if ($("#devicepub").is(':checked')) { //向单个设备发送
+            result = usrCloud.USR_PublishRawToDev(devId, dataByte);
+            if (result === 0) {
+                $("#sendData2").append("<li>devId:" + devId + " data:" + payload);
+            }
+        } else { //向账号下全部设备发送
+            result = usrCloud.USR_PublishRawToUser($("#account").val(), dataByte);
+            if (result === 0) {
+                $("#sendData2").append("<li>username:" + $("#account").val() + " data:" + payload);
+            }
+        }
+        if (result !== 0) {
+            $("#info4").text("发送失败");
+        } else {
+            $("#info4").text("");
+            $("#sendCount2").text(parseInt($("#sendCount2").text())+1);
+        }
+    }
+
+    function clear1() {
+
+        $("#sendData1").html("");
+        $("#sendCount1").text(0);
+    }
+   function clear2() {
+        $("#rcvData1").html("");
+        $("#rcvCount1").text(0);
+    }
+
+
+    function clear3() {
+        $("#sendData2").html("");
+        $("#sendCount2").text(0);
+    }
+    function clear4(){
+        $("#rcvData2").html("");
+        $("#rcvCount2").text(0);
+    }
+
+</script>
+</body>
+</html>
