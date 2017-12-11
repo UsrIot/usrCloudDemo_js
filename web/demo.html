@@ -39,8 +39,8 @@
 </fieldset>
 <fieldset>
     <legend>登陆</legend>
-    用户名：<input id="account" value="test2"/>
-    密码：<input id="password" type="password" value="123456"/>
+    用户名：<input id="account" value="sdktest"/>
+    密码：<input id="password" type="password" value="sdktest"/>
     <button onclick="connect()">连接</button>
     <button onclick="disConnect()">断开</button>
     <span id="info1" class='info'></span>
@@ -51,11 +51,11 @@
     <legend>订阅 & 取消订阅（订阅后收到设备推送消息）</legend>
     <fieldset style="width:40%;height:280px;float:left;line-height: 30px;">
         <legend>操作</legend>
-        设备ID：<br/><input id="devId" value="00004299000000000011"/><br/>
+        设备ID：<br/><input id="devId" value="00007867000000000001"/><br/>
         <button onclick="subscribeDevParsed()">订阅</button>
         <button onclick="unSubscribeDevParsed()">取消订阅</button>
         <span id="info2" class='info'></span><br/>
-        数据点ID：<br/><input id="dataPointId" value="2922"/><br/>
+        数据点ID：<br/><input id="dataPointId" value="118"/><br/>
         发送数值：<br/><input id="value" value="0"/><br/>
         <button onclick="publishParsedSetDataPoint()">写入数据</button>
         <!--<button onclick="publishParsedQueryDataPoint()">读取数据</button>-->
@@ -88,7 +88,7 @@
     <fieldset style="width:49.5%;height:360px;float:left;line-height:30px">
         <legend>操作</legend>
         <input type="radio" id="devicesub" value="device" name="subscribeMode" checked="checked"/>单个设备<br/>设备ID：
-        <input type="text" placeholder="输入设备ID..." value="00004299000000000011" id="devId2"/><br/>
+        <input type="text" placeholder="输入设备ID..." value="00007867000000000001" id="devId2"/><br/>
         <label style="font-size:14px;">（多个设备用英文格式的","分隔）</label>
         <br/>
         <input type="radio" id="accountsub" value="account" name="subscribeMode"/>账号下全部设备<br/>
@@ -97,10 +97,10 @@
         <span id="info3" class='info'></span><br/>
         <input type="radio" id="devicepub" value="device" name="publishMode" checked="checked"/>单发
         &nbsp;&nbsp;设备ID:
-        <input type="text" id="publishTopic" placeholder="输入设备ID..." value="00004299000000000011"><br/>
+        <input type="text" id="publishTopic" placeholder="输入设备ID..." value="00007867000000000001"><br/>
         <input type="radio" id="accountpub" value="account" name="publishMode"/>群发
         <input type="checkbox" id="isPubHex" checked>16进制<br/>
-        <textarea id="publishPayload" style="width:100%;height: 70px;padding:15px;box-sizing:border-box;">0f 30 06 40 00 02  c0 7d</textarea>
+        <textarea id="publishPayload" style="width:100%;height: 70px;padding:15px;box-sizing:border-box;">01 03 00 63 00 03 F5 D5</textarea>
         <input type="button" onclick="publishRawToDev()" name="Publish" value="发送"/>
         <span id="info4" class='info'></span>
     </fieldset>
