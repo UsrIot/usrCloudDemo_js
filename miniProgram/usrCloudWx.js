@@ -253,7 +253,8 @@ function UsrCloud() {
         return 0;
     };
     /**
-     * 设置单台设备数据点值
+     * 设置单台设备数据点值(弃用）
+     * @deprecated
      * @param devId
      * @param pointId
      * @param value
@@ -278,7 +279,34 @@ function UsrCloud() {
         return 0;
     };
     /**
-     *查询单台设备数据点值
+     * 设置单台设备数据点值
+     * @param devId
+     * @param slaveIndex
+     * @param pointId
+     * @param value
+     * @return {number}
+     * @constructor
+     */
+    this.USR_PublishParsedSetSlaveDataPoint = function (devId,slaveIndex,pointId,value) {
+        var payloadObj = {'setDataPoint': {}};
+        payloadObj['setDataPoint']['slaveIndex'] = slaveIndex;
+        payloadObj['setDataPoint']['pointId'] = pointId;
+        payloadObj['setDataPoint']['value'] = value;
+        var payloadString = JSON.stringify(payloadObj);
+        //获取消息UTF-8编码字节长度并创建Uint8Array字节数组
+        var dataByte = [];
+        for (var i = 0; i < payloadString.length; i++) {
+            dataByte[i] = payloadString.charCodeAt(i);
+        }
+        stringToUTF8(payloadString, dataByte, 0);
+        if ((result = publish(DEVJSONRX_TOPIC_PREFIX + devId, dataByte)) !== 0) {
+            return result;
+        }
+        return 0;
+    };
+    /**
+     *查询单台设备数据点值(弃用）
+     * @deprecated
      * @param devId
      * @param pointId
      * @return {*}
@@ -295,6 +323,30 @@ function UsrCloud() {
         }
         stringToUTF8(payloadString, dataByte, 0);
         let result;
+        if ((result = publish(DEVJSONRX_TOPIC_PREFIX + devId, dataByte)) !== 0) {
+            return result;
+        }
+        return 0;
+    };
+    /**
+     * 查询单台设备数据点值
+     * @param devId
+     * @param slaveIndex
+     * @param pointId
+     * @return {*}
+     * @constructor
+     */
+    this.USR_PublishParsedQuerySlaveDataPoint = function (devId, slaveIndex,pointId) {
+        var payloadObj = {'queryDataPoint': {}};
+        payloadObj['queryDataPoint']['slaveIndex'] = pointId;
+        payloadObj['queryDataPoint']['pointId'] = pointId;
+        var payloadString = JSON.stringify(payloadObj);
+        //获取消息UTF-8编码字节长度并创建Uint8Array字节数组
+        var dataByte = [];
+        for (var i = 0; i < payloadString.length; i++) {
+            dataByte[i] = payloadString.charCodeAt(i);
+        }
+        stringToUTF8(payloadString, dataByte, 0);
         if ((result = publish(DEVJSONRX_TOPIC_PREFIX + devId, dataByte)) !== 0) {
             return result;
         }
@@ -753,13 +805,17 @@ function UsrCloud() {
      */
     var onMessageArrived = function (message) {
         var devId = message.destinationName.split('/').reverse()[0];
+        !callbackobj.USR_onRcv || callbackobj.USR_onRcv(message.destinationName,message.payloadBytes);
         //json数据
         if (message.destinationName.indexOf('Json') !== -1) {
+            //console.log(message.payloadString);
             var messageObj = JSON.parse(message.payloadString);
             if (messageObj.hasOwnProperty("dataPointReturn")) {
                 USR_onRcvParsedDataPointReturn.fire(
                     {
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'dataPointReturn': messageObj['dataPointReturn']
                     }
                 );
@@ -777,6 +833,8 @@ function UsrCloud() {
                         'account': account,
                         'devName': messageObj['devStatus']['devName'],
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'status': messageObj['devStatus']['status']
                     }
                 );
@@ -786,6 +844,8 @@ function UsrCloud() {
                     {
                         'account': account,
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'devAlarm': messageObj['devAlarm']
                     }
                 );
@@ -818,7 +878,7 @@ function UsrCloud() {
             });
         }
         return 0;
-    }
+    };
     /**
      * 是否已经订阅主题
      */
