@@ -288,6 +288,7 @@ function UsrCloud() {
      * @constructor
      */
     this.USR_PublishParsedSetSlaveDataPoint = function (devId,slaveIndex,pointId,value) {
+        let result;
         var payloadObj = {'setDataPoint': {}};
         payloadObj['setDataPoint']['slaveIndex'] = slaveIndex;
         payloadObj['setDataPoint']['pointId'] = pointId;
@@ -337,6 +338,7 @@ function UsrCloud() {
      * @constructor
      */
     this.USR_PublishParsedQuerySlaveDataPoint = function (devId, slaveIndex,pointId) {
+ 	let result;
         var payloadObj = {'queryDataPoint': {}};
         payloadObj['queryDataPoint']['slaveIndex'] = pointId;
         payloadObj['queryDataPoint']['pointId'] = pointId;
