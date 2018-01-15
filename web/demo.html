@@ -49,9 +49,10 @@
 <h1>云组态</h1>
 <fieldset>
     <legend>订阅 & 取消订阅（订阅后收到设备推送消息）</legend>
-    <fieldset style="width:40%;height:280px;float:left;line-height: 30px;">
+    <fieldset style="width:40%;height:340px;float:left;line-height: 30px;">
         <legend>操作</legend>
         设备ID：<br/><input id="devId" value="00007867000000000001"/><br/>
+        从机序号：<br><input id="slaveIndex" value="1"><br>
         <button onclick="subscribeDevParsed()">订阅</button>
         <button onclick="unSubscribeDevParsed()">取消订阅</button>
         <span id="info2" class='info'></span><br/>
@@ -61,7 +62,7 @@
         <!--<button onclick="publishParsedQueryDataPoint()">读取数据</button>-->
         <span id="info5" class='info'></span>
     </fieldset>
-    <fieldset style="width:59%;height:280px;float:right;overflow: auto;">
+    <fieldset style="width:59%;height:340px;float:right;overflow: auto;">
         <legend>已订阅设备</legend>
         <ul id="topic1"></ul>
     </fieldset>
@@ -218,10 +219,11 @@
     /**
      * 数据点数据推送回调（云组态）
      */
+    //todo 看一下返回的字段
     function USR_onRcvParsedDataPointPush(event) {
         console.log(event);
         $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
-        $("#rcvData1").append("<li>devId:" + event.devId + " dataPointId:" + event.dataPoints[0].pointId + " value:" + event.dataPoints[0].value);
+        $("#rcvData1").append("<li>devId:" + event.devId +"slaveIndex"+event.dataPoints[0].slaveIndex+ " dataPointId:" + event.dataPoints[0].pointId + " value:" + event.dataPoints[0].value);
     }
 
     /**
@@ -313,11 +315,11 @@
      * 设置数据点数据（云组态）
      */
     function publishParsedSetDataPoint() {
-        var result = usrCloud.USR_PublishParsedSetDataPoint($("#devId").val(), $("#dataPointId").val(), $("#value").val());
+        var result = usrCloud.USR_PublishParsedSetSlaveDataPoint($("#devId").val(), $("#slaveIndex").val(),$("#dataPointId").val(), $("#value").val());
         if (result === 0) {
             $("#sendCount1").text(parseInt($("#sendCount1").text())+1);
             $("#info5").text("");
-            $("#sendData1").append("<li>devId:" + $("#devId").val() + " dataPointId:" + $("#dataPointId").val() + " value:" + $("#value").val()+"</li>");
+            $("#sendData1").append("<li>devId:" + $("#devId").val() + " slaveIndex:" + $("#slaveIndex").val() + " dataPointId:" + $("#dataPointId").val() + " value:" + $("#value").val()+"</li>");
         } else {
             $("#info5").text("发送失败");
         }
@@ -387,7 +389,6 @@
     }
 
     function clear1() {
-
         $("#sendData1").html("");
         $("#sendCount1").text(0);
     }

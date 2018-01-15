@@ -257,7 +257,8 @@ var UsrCloud = function () {
         return 0;
     };
     /**
-     * 设置单台设备数据点值
+     * 设置单台设备数据点值(弃用）
+     * @deprecated
      * @param devId
      * @param pointId
      * @param value
@@ -281,7 +282,34 @@ var UsrCloud = function () {
         return 0;
     };
     /**
-     *查询单台设备数据点值
+     * 设置单台设备数据点值
+     * @param devId
+     * @param slaveIndex
+     * @param pointId
+     * @param value
+     * @return {number}
+     * @constructor
+     */
+    this.USR_PublishParsedSetSlaveDataPoint = function (devId,slaveIndex,pointId,value) {
+        var payloadObj = {'setDataPoint': {}};
+        payloadObj['setDataPoint']['slaveIndex'] = slaveIndex;
+        payloadObj['setDataPoint']['pointId'] = pointId;
+        payloadObj['setDataPoint']['value'] = value;
+        var payloadString = JSON.stringify(payloadObj);
+        //获取消息UTF-8编码字节长度并创建Uint8Array字节数组
+        var dataByte = [];
+        for (var i = 0; i < payloadString.length; i++) {
+            dataByte[i] = payloadString.charCodeAt(i);
+        }
+        stringToUTF8(payloadString, dataByte, 0);
+        if ((result = publish(DEVJSONRX_TOPIC_PREFIX + devId, dataByte)) !== 0) {
+            return result;
+        }
+        return 0;
+    };
+    /**
+     *查询单台设备数据点值(弃用）
+     * @deprecated
      * @param devId
      * @param pointId
      * @return {*}
@@ -289,6 +317,30 @@ var UsrCloud = function () {
      */
     this.USR_PublishParsedQueryDataPoint = function (devId, pointId) {
         var payloadObj = {'queryDataPoint': {}};
+        payloadObj['queryDataPoint']['pointId'] = pointId;
+        var payloadString = JSON.stringify(payloadObj);
+        //获取消息UTF-8编码字节长度并创建Uint8Array字节数组
+        var dataByte = [];
+        for (var i = 0; i < payloadString.length; i++) {
+            dataByte[i] = payloadString.charCodeAt(i);
+        }
+        stringToUTF8(payloadString, dataByte, 0);
+        if ((result = publish(DEVJSONRX_TOPIC_PREFIX + devId, dataByte)) !== 0) {
+            return result;
+        }
+        return 0;
+    };
+    /**
+     * 查询单台设备数据点值
+     * @param devId
+     * @param slaveIndex
+     * @param pointId
+     * @return {*}
+     * @constructor
+     */
+    this.USR_PublishParsedQuerySlaveDataPoint = function (devId, slaveIndex,pointId) {
+        var payloadObj = {'queryDataPoint': {}};
+        payloadObj['queryDataPoint']['slaveIndex'] = pointId;
         payloadObj['queryDataPoint']['pointId'] = pointId;
         var payloadString = JSON.stringify(payloadObj);
         //获取消息UTF-8编码字节长度并创建Uint8Array字节数组
@@ -774,6 +826,8 @@ var UsrCloud = function () {
                 USR_onRcvParsedDataPointReturn.fire(
                     {
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'dataPointReturn': messageObj['dataPointReturn']
                     }
                 );
@@ -781,7 +835,7 @@ var UsrCloud = function () {
                 USR_onRcvParsedDataPointPush.fire(
                     {
                         'devId': devId,
-                        'dataPoints': messageObj['dataPoints']
+                        'dataPoints': messageObj['dataPoints'],
                     }
                 );
             } else if (messageObj.hasOwnProperty("devStatus")) {
@@ -791,6 +845,8 @@ var UsrCloud = function () {
                         'account': account,
                         'devName': messageObj['devStatus']['devName'],
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'status': messageObj['devStatus']['status']
                     }
                 );
@@ -800,6 +856,8 @@ var UsrCloud = function () {
                     {
                         'account': account,
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'devAlarm': messageObj['devAlarm']
                     }
                 );
@@ -807,6 +865,8 @@ var UsrCloud = function () {
                 USR_onRcvParsedOptionResponseReturn.fire(
                     {
                         'devId': devId,
+                        'slaveIndex':messageObj['slaveIndex'],
+                        'slaveAddr':messageObj['slaveAddr'],
                         'optionResponse': messageObj['optionResponse'],
                         'devName': messageObj['devName']
                     }
