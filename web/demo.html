@@ -221,9 +221,10 @@
      */
     //todo 看一下返回的字段
     function USR_onRcvParsedDataPointPush(event) {
-        console.log(event);
-        $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
-        $("#rcvData1").append("<li>devId:" + event.devId +"slaveIndex"+event.dataPoints[0].slaveIndex+ " dataPointId:" + event.dataPoints[0].pointId + " value:" + event.dataPoints[0].value);
+        for(let i in event.dataPoints){
+            $("#rcvCount1").text(parseInt($("#rcvCount1").text())+1);
+            $("#rcvData1").append("<li>devId:" + event.devId +"slaveIndex"+event.dataPoints[i].slaveIndex+ " dataPointId:" + event.dataPoints[i].pointId + " value:" + event.dataPoints[i].value);
+        }
     }
 
     /**
